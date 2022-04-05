@@ -1,24 +1,24 @@
 package com.github.horizontal.timeview.demo;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.Nullable;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
+
 import com.github.horizontal.timeview.Schedule;
 import com.github.horizontal.timeview.TimeTableViews;
 import com.github.horizontal.timeview.TimetableView;
-import com.github.tlaabs.timetableviewdemo.R;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener {
+public class MainActivity extends Activity implements View.OnClickListener {
     private Context context;
     public static final int REQUEST_ADD = 1;
     public static final int REQUEST_EDIT = 2;

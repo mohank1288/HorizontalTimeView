@@ -1,9 +1,9 @@
 package com.github.horizontal.timeview.demo;
 
+import android.app.Activity;
 import android.app.TimePickerDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -15,11 +15,10 @@ import android.widget.TimePicker;
 
 import com.github.horizontal.timeview.Schedule;
 import com.github.horizontal.timeview.Time;
-import com.github.tlaabs.timetableviewdemo.R;
 
 import java.util.ArrayList;
 
-public class EditActivity extends AppCompatActivity implements View.OnClickListener {
+public class EditActivity extends Activity implements View.OnClickListener {
     public static final int RESULT_OK_ADD = 1;
     public static final int RESULT_OK_EDIT = 2;
     public static final int RESULT_OK_DELETE = 3;
