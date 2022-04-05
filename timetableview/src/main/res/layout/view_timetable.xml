@@ -1,26 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    >
-    <include layout="@layout/table_header"/>
+    android:layout_height="match_parent">
 
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        >
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <RelativeLayout
-            android:id="@+id/sticker_box"
+        <include layout="@layout/table_header" />
+
+        <ScrollView
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="0dp"
+            android:layout_weight="1">
 
-            <include layout="@layout/inner_table"/>
+            <RelativeLayout
+                android:id="@+id/sticker_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
 
-        </RelativeLayout>
-    </ScrollView>
+                <include layout="@layout/inner_table" />
 
-</LinearLayout>
+            </RelativeLayout>
+        </ScrollView>
+    </LinearLayout>
+</HorizontalScrollView>

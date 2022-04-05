@@ -1,10 +1,22 @@
 <resources>
     <string-array name="default_header_title">
         <item></item>
-        <item>Mon</item>
+<!--        <item>Mon</item>
         <item>Tue</item>
         <item>Wed</item>
         <item>Thu</item>
-        <item>Fri</item>
+        <item>Fri</item>-->
+        <item>January</item>
+        <item>Feburary</item>
+        <item>March</item>
+        <item>April</item>
+        <item>May</item>
+        <item>June</item>
+        <item>July</item>
+        <item>August</item>
+        <item>September</item>
+        <item>October</item>
+        <item>November</item>
+        <item>December</item>
     </string-array>
 </resources>

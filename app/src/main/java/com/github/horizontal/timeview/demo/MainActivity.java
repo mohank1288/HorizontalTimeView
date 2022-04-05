@@ -1,18 +1,20 @@
-package com.github.tlaabs.timetableviewdemo;
+package com.github.horizontal.timeview.demo;
 
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.github.tlaabs.timetableview.Schedule;
-import com.github.tlaabs.timetableview.TimetableView;
+import com.github.horizontal.timeview.Schedule;
+import com.github.horizontal.timeview.TimeTableViews;
+import com.github.horizontal.timeview.TimetableView;
+import com.github.tlaabs.timetableviewdemo.R;
 
 import java.util.ArrayList;
 
@@ -26,7 +28,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button saveBtn;
     private Button loadBtn;
 
-    private TimetableView timetable;
+    private TimeTableViews timetable;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -43,7 +45,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         loadBtn = findViewById(R.id.load_btn);
 
         timetable = findViewById(R.id.timetable);
-        timetable.setHeaderHighlight(2);
+        //timetable.setHeaderHighlight(2);
         initView();
     }
 

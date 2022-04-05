@@ -1,4 +1,4 @@
-package com.github.tlaabs.timetableview;
+package com.github.horizontal.timeview;
 
 import android.widget.TextView;
 
