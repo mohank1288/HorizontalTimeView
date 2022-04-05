@@ -11,7 +11,7 @@ import java.util.HashMap;
 public class SaveManager {
     public static String saveSticker(HashMap<Integer, Sticker> stickers){
         JsonObject obj1 = new JsonObject();
-        JsonArray arr1 = new JsonArray();
+        /*JsonArray arr1 = new JsonArray();
         int[] orders = getSortedKeySet(stickers);
         for(int i = 0 ; i < orders.length; i++){
             JsonObject obj2 = new JsonObject();
@@ -38,13 +38,13 @@ public class SaveManager {
             obj2.add("schedule",arr2);
             arr1.add(obj2);
         }
-        obj1.add("sticker",arr1);
+        obj1.add("sticker",arr1);*/
         return obj1.toString();
     }
 
     public static HashMap<Integer,Sticker> loadSticker(String json){
         HashMap<Integer, Sticker> stickers = new HashMap<Integer,Sticker>();
-        JsonParser parser = new JsonParser();
+        /*JsonParser parser = new JsonParser();
         JsonObject obj1 = (JsonObject)parser.parse(json);
         JsonArray arr1 = obj1.getAsJsonArray("sticker");
         for(int i = 0 ; i < arr1.size(); i++){
@@ -72,7 +72,7 @@ public class SaveManager {
                 sticker.addSchedule(schedule);
             }
             stickers.put(idx,sticker);
-        }
+        }*/
         return stickers;
     }
 

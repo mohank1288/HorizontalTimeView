@@ -16,6 +16,8 @@ import android.widget.TimePicker;
 import com.github.horizontal.timeview.Schedule;
 import com.github.horizontal.timeview.Time;
 
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 
 public class EditActivity extends Activity implements View.OnClickListener {
@@ -60,8 +62,11 @@ public class EditActivity extends Activity implements View.OnClickListener {
 
         //set the default time
         schedule = new Schedule();
-        schedule.setStartTime(new Time(10,0));
-        schedule.setEndTime(new Time(13,30));
+        schedule.setStartTime(LocalDateTime.now());
+        schedule.setEndTime(LocalDateTime.now().plusHours(2));
+
+        /*schedule.setStartTime(new Time(10,0));
+        schedule.setEndTime(new Time(13,30));*/
 
         checkMode();
         initView();
@@ -103,8 +108,9 @@ public class EditActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                     startTv.setText(hourOfDay + ":" + minute);
-                    schedule.getStartTime().setHour(hourOfDay);
-                    schedule.getStartTime().setMinute(minute);
+                    schedule.setStartTime(LocalDateTime.of(schedule.getStartTime().toLocalDate(), LocalTime.of(hourOfDay,minute)));
+                    /*schedule.getStartTime().setHour(hourOfDay);
+                    schedule.getStartTime().setMinute(minute);*/
                 }
             };
         });
@@ -119,8 +125,10 @@ public class EditActivity extends Activity implements View.OnClickListener {
                 @Override
                 public void onTimeSet(TimePicker view, int hourOfDay, int minute) {
                     endTv.setText(hourOfDay + ":" + minute);
-                    schedule.getEndTime().setHour(hourOfDay);
-                    schedule.getEndTime().setMinute(minute);
+                    schedule.setEndTime(LocalDateTime.of(schedule.getStartTime().toLocalDate(), LocalTime.of(hourOfDay,minute)));
+
+                    /*schedule.getEndTime().setHour(hourOfDay);
+                    schedule.getEndTime().setMinute(minute);*/
                 }
             };
         });

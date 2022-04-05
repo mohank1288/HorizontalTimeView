@@ -1,26 +1,19 @@
 package com.github.horizontal.timeview;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 public class Schedule implements Serializable {
-    static final int MON = 0;
-    static final int TUE = 1;
-    static final int WED = 2;
-    static final int THU = 3;
-    static final int FRI = 4;
-    static final int SAT = 5;
-    static final int SUN = 6;
-
     String classTitle="";
     String classPlace="";
     String professorName="";
     private int day = 0;
-    private Time startTime;
-    private Time endTime;
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
 
     public Schedule() {
-        this.startTime = new Time();
-        this.endTime = new Time();
+        this.startTime = LocalDateTime.now();
+        this.endTime = LocalDateTime.now();
     }
 
     public String getProfessorName() {
@@ -55,19 +48,19 @@ public class Schedule implements Serializable {
         this.day = day;
     }
 
-    public Time getStartTime() {
+    public LocalDateTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(Time startTime) {
+    public void setStartTime(LocalDateTime startTime) {
         this.startTime = startTime;
     }
 
-    public Time getEndTime() {
+    public LocalDateTime getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(Time endTime) {
+    public void setEndTime(LocalDateTime endTime) {
         this.endTime = endTime;
     }
 }

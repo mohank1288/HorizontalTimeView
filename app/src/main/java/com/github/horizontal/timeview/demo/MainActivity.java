@@ -14,7 +14,6 @@ import androidx.annotation.Nullable;
 
 import com.github.horizontal.timeview.Schedule;
 import com.github.horizontal.timeview.TimeTableViews;
-import com.github.horizontal.timeview.TimetableView;
 
 import java.util.ArrayList;
 
@@ -45,7 +44,6 @@ public class MainActivity extends Activity implements View.OnClickListener {
         loadBtn = findViewById(R.id.load_btn);
 
         timetable = findViewById(R.id.timetable);
-        //timetable.setHeaderHighlight(2);
         initView();
     }
 
@@ -55,15 +53,12 @@ public class MainActivity extends Activity implements View.OnClickListener {
         saveBtn.setOnClickListener(this);
         loadBtn.setOnClickListener(this);
 
-        timetable.setOnStickerSelectEventListener(new TimetableView.OnStickerSelectedListener() {
-            @Override
-            public void OnStickerSelected(int idx, ArrayList<Schedule> schedules) {
-                Intent i = new Intent(context, EditActivity.class);
-                i.putExtra("mode",REQUEST_EDIT);
-                i.putExtra("idx", idx);
-                i.putExtra("schedules", schedules);
-                startActivityForResult(i,REQUEST_EDIT);
-            }
+        timetable.setOnStickerSelectEventListener((idx, schedules) -> {
+            Intent i = new Intent(context, EditActivity.class);
+            i.putExtra("mode",REQUEST_EDIT);
+            i.putExtra("idx", idx);
+            i.putExtra("schedules", schedules);
+            startActivityForResult(i,REQUEST_EDIT);
         });
     }
 

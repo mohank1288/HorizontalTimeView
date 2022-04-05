@@ -21,6 +21,8 @@ import android.widget.TextView;
 
 import com.github.tlaabs.timetableview.R;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,10 +30,10 @@ import java.util.Objects;
 
 public class TimeTableViews extends LinearLayout {
     private static final int DEFAULT_ROW_COUNT = 13;
-    private static final int DEFAULT_COLUMN_COUNT = 25;
+    //private static final int DEFAULT_COLUMN_COUNT = 25;
     private static final int DEFAULT_CELL_HEIGHT_DP = 50;
     private static final int DEFAULT_SIDE_CELL_WIDTH_DP = 80;
-    private static final int DEFAULT_START_TIME = 0;
+    //private static final int DEFAULT_START_TIME = LocalDateTime.now();
 
     private static final int DEFAULT_SIDE_HEADER_FONT_SIZE_DP = 13;
     private static final int DEFAULT_HEADER_FONT_SIZE_DP = 15;
@@ -43,8 +45,9 @@ public class TimeTableViews extends LinearLayout {
     private int cellWidth;
     private String[] headerTitle;
     private String[] stickerColors;
-    private int startTime;
-
+    private LocalDateTime startTime;
+    private LocalDateTime endTime;
+    private int totalMinutes;
     private RelativeLayout stickerBox;
     TableLayout tableHeader;
     TableLayout tableBox;
@@ -54,7 +57,7 @@ public class TimeTableViews extends LinearLayout {
     HashMap<Integer, Sticker> stickers = new HashMap<>();
     private int stickerCount = -1;
 
-    private TimetableView.OnStickerSelectedListener stickerSelectedListener = null;
+    private OnStickerSelectedListener stickerSelectedListener = null;
 
     public TimeTableViews(Context context) {
         super(context, null);
@@ -74,15 +77,21 @@ public class TimeTableViews extends LinearLayout {
 
     private void getAttrs(AttributeSet attrs) {
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TimetableView);
-        rowCount = a.getInt(R.styleable.TimetableView_row_count, DEFAULT_ROW_COUNT) ;
-        columnCount = a.getInt(R.styleable.TimetableView_column_count, DEFAULT_COLUMN_COUNT);
+        rowCount = a.getInt(R.styleable.TimetableView_row_count, DEFAULT_ROW_COUNT);
+        //columnCount = a.getInt(R.styleable.TimetableView_column_count, DEFAULT_COLUMN_COUNT);
         cellHeight = a.getDimensionPixelSize(R.styleable.TimetableView_cell_height, dp2Px(DEFAULT_CELL_HEIGHT_DP));
         cellWidth = a.getDimensionPixelSize(R.styleable.TimetableView_side_cell_width, dp2Px(DEFAULT_SIDE_CELL_WIDTH_DP));
         int titlesId = a.getResourceId(R.styleable.TimetableView_header_title, R.array.default_header_title);
         headerTitle = a.getResources().getStringArray(titlesId);
         int colorsId = a.getResourceId(R.styleable.TimetableView_sticker_colors, R.array.default_sticker_color);
         stickerColors = a.getResources().getStringArray(colorsId);
-        startTime = a.getInt(R.styleable.TimetableView_start_time, DEFAULT_START_TIME);
+        startTime = LocalDateTime.now();
+        endTime = LocalDateTime.now().plusHours(2);
+        Duration d = Duration.between(startTime, endTime);
+        totalMinutes = Math.toIntExact(d.toMinutes());
+        columnCount = (totalMinutes / 5) + 1;
+        //int min =  (totalMins/5);
+        //startTime = a.getInt(R.styleable.TimetableView_start_time, DEFAULT_START_TIME);
 
         a.recycle();
     }
@@ -99,14 +108,20 @@ public class TimeTableViews extends LinearLayout {
         createTable();
     }
 
-    public void setOnStickerSelectEventListener(TimetableView.OnStickerSelectedListener listener) {
+    public void setOnStickerSelectEventListener(OnStickerSelectedListener listener) {
         stickerSelectedListener = listener;
     }
 
-    private String getHeaderTime(int i) {
-        int p = (startTime + i) % 24;
+    private String getHeaderTime(int i, LocalDateTime localDateTime) {
+        if(i!=0){
+           localDateTime = localDateTime.plusMinutes(i* 5L);
+        }
+        return localDateTime.getHour() + ":" + localDateTime.getMinute();
+
+        /*this.startTime.getHour() +":" + this.startTime.getMinute()
+        int p = (this.startTime.getHour() + i) % 24;
         int res = p <= 12 ? p : p - 12;
-        return res + "";
+        return res + "";*/
     }
 
     static private int dp2Px(int dp) {
@@ -130,13 +145,11 @@ public class TimeTableViews extends LinearLayout {
             tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_STICKER_FONT_SIZE_DP);
             tv.setTypeface(null, Typeface.BOLD);
 
-            tv.setOnClickListener(new OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if(stickerSelectedListener != null)
-                        stickerSelectedListener.OnStickerSelected(count, schedules);
-                }
-            });
+            tv.setOnClickListener(v -> {
+                        if (stickerSelectedListener != null)
+                            stickerSelectedListener.OnStickerSelected(count, schedules);
+                    }
+            );
             sticker.addTextView(tv);
             sticker.addSchedule(schedule);
             stickers.put(count, sticker);
@@ -218,7 +231,7 @@ public class TimeTableViews extends LinearLayout {
             }
             tv.setTextColor(getResources().getColor(R.color.colorHeaderText));
             tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_HEADER_FONT_SIZE_DP);
-            tv.setText(getHeaderTime(i));
+            tv.setText(getHeaderTime(i,startTime));
             tv.setGravity(Gravity.RIGHT);
 
             tableRow.addView(tv);
@@ -254,28 +267,32 @@ public class TimeTableViews extends LinearLayout {
     }
 
     private RelativeLayout.LayoutParams createStickerParam(Schedule schedule) {
-        RelativeLayout.LayoutParams param = new RelativeLayout.LayoutParams( calStickerHeightPx(schedule),cellHeight);
+        RelativeLayout.LayoutParams param = new RelativeLayout.LayoutParams(calStickerWidthPx(schedule), cellHeight);
         param.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         param.addRule(RelativeLayout.ALIGN_PARENT_START);
-        param.setMargins( cellWidth+ calStickerTopPxByTime(schedule.getStartTime()), cellHeight * schedule.getDay(), 0, 0);
+        param.setMargins( calStickerStartPxByTime(schedule.getStartTime()) - cellWidth + (calCellWidth()), cellHeight * schedule.getDay(), 0, 0);
         return param;
     }
 
-    private int calCellWidth(){
+    private int calStickerStartPxByTimes(LocalDateTime time) {
+        return ((time.getHour() - startTime.getHour()) * calCellWidth()) +(int) ((time.getMinute() / 60.0f) * calCellWidth());
+    }
+
+    private int calCellWidth() {
         Display display = ((Activity) context).getWindowManager().getDefaultDisplay();
         Point size = new Point();
         display.getSize(size);
-        return (size.x-getPaddingLeft() - getPaddingRight()- cellWidth) / (rowCount - 1);
+        return (size.x - getPaddingStart() - getPaddingEnd() - cellWidth) / (rowCount - 1);
     }
 
-    private int calStickerHeightPx(Schedule schedule) {
-        int startTopPx = calStickerTopPxByTime(schedule.getStartTime());
-        int endTopPx = calStickerTopPxByTime(schedule.getEndTime());
-        return endTopPx - startTopPx;
+    private int calStickerWidthPx(Schedule schedule) {
+        int startTopPx = calStickerStartPxByTime(schedule.getStartTime());
+        int endTopPx = calStickerStartPxByTime(schedule.getEndTime())  ;
+        return (endTopPx - startTopPx)*12;
     }
 
-    private int calStickerTopPxByTime(Time time) {
-        return  (time.getHour() - startTime) * calCellWidth() + (int) ((time.getMinute() / 60.0f) * calCellWidth());
+    private int calStickerStartPxByTime(LocalDateTime time) {
+        return ((time.getHour() - startTime.getHour()) * calCellWidth()) +(int) ((time.getMinute() / 60.0f) * calCellWidth());
     }
 
     private TableLayout.LayoutParams createTableLayoutParam() {
@@ -289,4 +306,9 @@ public class TimeTableViews extends LinearLayout {
     private TableRow.LayoutParams createTableRowParam(int w_px, int h_px) {
         return new TableRow.LayoutParams(w_px, h_px);
     }
+
+    public interface OnStickerSelectedListener {
+        void OnStickerSelected(int idx, ArrayList<Schedule> schedules);
+    }
+
 }
