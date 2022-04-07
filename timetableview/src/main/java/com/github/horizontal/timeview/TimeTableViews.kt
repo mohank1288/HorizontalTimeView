@@ -1,125 +1,109 @@
-package com.github.horizontal.timeview;
+package com.github.horizontal.timeview
 
-import android.app.Activity;
-import android.content.Context;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.Point;
-import android.graphics.Typeface;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.Display;
-import android.view.Gravity;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
-import android.widget.TableLayout;
-import android.widget.TableRow;
-import android.widget.TextView;
+import android.app.Activity
+import android.content.Context
+import android.content.res.Resources
+import android.graphics.Color
+import android.graphics.Point
+import android.graphics.Typeface
+import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.*
+import androidx.core.content.ContextCompat
+import com.github.tlaabs.timetableview.R
+import java.time.Duration
+import java.time.LocalDateTime
+import java.util.*
 
-import androidx.core.content.ContextCompat;
+class TimeTableViews : LinearLayout {
+    private var rowCount = 0
+    private var columnCount = 0
+    private var cellHeight = 0
+    private var cellWidth = 0
+    private lateinit var headerTitle: Array<String>
+    private lateinit var stickerColors: Array<String>
+    private var startTime: LocalDateTime = LocalDateTime.now()
+    private var stickerBox: RelativeLayout? = null
+    var tableHeader: TableLayout? = null
+    var tableBox: TableLayout? = null
+    //private  var context: Context? = null
+    var stickers = HashMap<Int, Sticker>()
+    private var stickerCount = -1
+    private var stickerSelectedListener: OnStickerSelectedListener? = null
 
-import com.github.tlaabs.timetableview.R;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Objects;
-
-public class TimeTableViews extends LinearLayout {
-    private static final int DEFAULT_ROW_COUNT = 13;
-    //private static final int DEFAULT_COLUMN_COUNT = 25;
-    private static final int DEFAULT_CELL_HEIGHT_DP = 50;
-    private static final int DEFAULT_SIDE_CELL_WIDTH_DP = 80;
-    //private static final int DEFAULT_START_TIME = LocalDateTime.now();
-
-    private static final int DEFAULT_SIDE_HEADER_FONT_SIZE_DP = 13;
-    private static final int DEFAULT_HEADER_FONT_SIZE_DP = 15;
-    private static final int DEFAULT_STICKER_FONT_SIZE_DP = 13;
-    private static final int TIME_SCALE = 5;
-    private static final int ONE_HOUR = 60;
-    private static final int DIVISION_SCALE = ONE_HOUR / TIME_SCALE;
-    private int rowCount;
-    private int columnCount;
-    private int cellHeight;
-    private int cellWidth;
-    private String[] headerTitle;
-    private String[] stickerColors;
-    private LocalDateTime startTime;
-    private RelativeLayout stickerBox;
-    TableLayout tableHeader;
-    TableLayout tableBox;
-
-    private final Context context;
-
-    HashMap<Integer, Sticker> stickers = new HashMap<>();
-    private int stickerCount = -1;
-
-    private OnStickerSelectedListener stickerSelectedListener = null;
-
-    public TimeTableViews(Context context) {
-        super(context, null);
-        this.context = context;
+    constructor(context: Context) : super(context, null) {
+        //this.context = context
     }
 
-    public TimeTableViews(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    @JvmOverloads
+    constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int = 0) : super(
+        context,
+        attrs,
+        defStyleAttr
+    ) {
+        //this.context = context
+        getAttrs(attrs)
+        init()
     }
 
-    public TimeTableViews(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        this.context = context;
-        getAttrs(attrs);
-        init();
-    }
-
-    private void getAttrs(AttributeSet attrs) {
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TimetableView);
-        rowCount = a.getInt(R.styleable.TimetableView_row_count, DEFAULT_ROW_COUNT);
+    private fun getAttrs(attrs: AttributeSet?) {
+        val a = context.obtainStyledAttributes(attrs, R.styleable.TimetableView)
+        rowCount = a.getInt(R.styleable.TimetableView_row_count, DEFAULT_ROW_COUNT)
         //columnCount = a.getInt(R.styleable.TimetableView_column_count, DEFAULT_COLUMN_COUNT);
-        cellHeight = a.getDimensionPixelSize(R.styleable.TimetableView_cell_height, dp2Px(DEFAULT_CELL_HEIGHT_DP));
-        cellWidth = a.getDimensionPixelSize(R.styleable.TimetableView_side_cell_width, dp2Px(DEFAULT_SIDE_CELL_WIDTH_DP));
-        int titlesId = a.getResourceId(R.styleable.TimetableView_header_title, R.array.default_header_title);
-        headerTitle = a.getResources().getStringArray(titlesId);
-        int colorsId = a.getResourceId(R.styleable.TimetableView_sticker_colors, R.array.default_sticker_color);
-        stickerColors = a.getResources().getStringArray(colorsId);
-        startTime = LocalDateTime.now();
-        LocalDateTime endTime = startTime.plusHours(6);
-        Duration d = Duration.between(startTime, endTime);
-        int totalMinutes = Math.toIntExact(d.toMinutes());
-        columnCount = (totalMinutes / TIME_SCALE) + 1;
+        cellHeight = a.getDimensionPixelSize(
+            R.styleable.TimetableView_cell_height, dp2Px(
+                DEFAULT_CELL_HEIGHT_DP
+            )
+        )
+        cellWidth = a.getDimensionPixelSize(
+            R.styleable.TimetableView_side_cell_width, dp2Px(
+                DEFAULT_SIDE_CELL_WIDTH_DP
+            )
+        )
+        val titlesId =
+            a.getResourceId(R.styleable.TimetableView_header_title, R.array.default_header_title)
+        headerTitle = a.resources.getStringArray(titlesId)
+        val colorsId =
+            a.getResourceId(R.styleable.TimetableView_sticker_colors, R.array.default_sticker_color)
+        stickerColors = a.resources.getStringArray(colorsId)
+        val endTime: LocalDateTime = startTime.plusHours(6)
+        val d = Duration.between(startTime, endTime)
+        val totalMinutes = Math.toIntExact(d.toMinutes())
+        columnCount = totalMinutes / TIME_SCALE + 1
         //int min =  (totalMins/5);
         //startTime = a.getInt(R.styleable.TimetableView_start_time, DEFAULT_START_TIME);
-
-        a.recycle();
+        a.recycle()
     }
 
-    private void init() {
-        LayoutInflater layoutInflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = layoutInflater.inflate(R.layout.view_timetable, this, false);
-        addView(view);
-
-        stickerBox = view.findViewById(R.id.sticker_box);
-        tableHeader = view.findViewById(R.id.table_header);
-        tableBox = view.findViewById(R.id.table_box);
-
-        createTable();
+    private fun init() {
+        val layoutInflater =
+            getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+        val view = layoutInflater.inflate(R.layout.view_timetable, this, false)
+        addView(view)
+        stickerBox = view.findViewById(R.id.sticker_box)
+        tableHeader = view.findViewById(R.id.table_header)
+        tableBox = view.findViewById(R.id.table_box)
+        createTable()
     }
 
-    public void setOnStickerSelectEventListener(OnStickerSelectedListener listener) {
-        stickerSelectedListener = listener;
+    fun setOnStickerSelectEventListener(listener: OnStickerSelectedListener?) {
+        stickerSelectedListener = listener
     }
 
-    private String getHeaderTime(int i, LocalDateTime localDateTime) {
+    private fun getHeaderTime(i: Int, localDateTime: LocalDateTime?): String {
+        var localDateTime = localDateTime
         if (i != 0) {
-            localDateTime = localDateTime.plusMinutes((long) i * TIME_SCALE);
+            localDateTime = localDateTime!!.plusMinutes(i.toLong() * TIME_SCALE)
         }
-        return String.format(Locale.ENGLISH, "%02d:%02d", localDateTime.getHour(), localDateTime.getMinute());
+        return String.format(
+            Locale.ENGLISH,
+            "%02d:%02d",
+            localDateTime!!.hour,
+            localDateTime.minute
+        )
         //return localDateTime.getHour() + ":" + localDateTime.getMinute();
 
         /*this.startTime.getHour() +":" + this.startTime.getMinute()
@@ -128,217 +112,236 @@ public class TimeTableViews extends LinearLayout {
         return res + "";*/
     }
 
-    static private int dp2Px(int dp) {
-        return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
+    fun add(schedules: ArrayList<Schedule>) {
+        add(schedules, -1)
     }
 
-
-    public void add(ArrayList<Schedule> schedules) {
-        add(schedules, -1);
-    }
-
-    private void add(final ArrayList<Schedule> schedules, int specIdx) {
-        final int count = specIdx < 0 ? ++stickerCount : specIdx;
-        Sticker sticker = new Sticker();
-        for (Schedule schedule : schedules) {
-            TextView tv = new TextView(context);
-            RelativeLayout.LayoutParams param = createStickerParam(schedule);
-            tv.setLayoutParams(param);
-            tv.setPadding(10, 0, 10, 0);
-            tv.setText(schedule.getClassTitle() + "\n" + schedule.getClassPlace());
-            tv.setTextColor(Color.parseColor("#FFFFFF"));
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_STICKER_FONT_SIZE_DP);
-            tv.setTypeface(null, Typeface.BOLD);
-
-            tv.setOnClickListener(v -> {
-                        if (stickerSelectedListener != null)
-                            stickerSelectedListener.OnStickerSelected(count, schedules);
-                    }
-            );
-            sticker.addTextView(tv);
-            sticker.addSchedule(schedule);
-            stickers.put(count, sticker);
-            stickerBox.addView(tv);
-        }
-        setStickerColor();
-    }
-
-    public String createSaveData() {
-        return SaveManager.saveSticker(stickers);
-    }
-
-    public void load(String data) {
-        removeAll();
-        stickers = SaveManager.loadSticker(data);
-        int maxKey = 0;
-        for (int key : stickers.keySet()) {
-            ArrayList<Schedule> schedules = Objects.requireNonNull(stickers.get(key)).getSchedules();
-            add(schedules, key);
-            if (maxKey < key) maxKey = key;
-        }
-        stickerCount = maxKey + 1;
-        setStickerColor();
-    }
-
-    public void removeAll() {
-        for (int key : stickers.keySet()) {
-            Sticker sticker = stickers.get(key);
-            for (TextView tv : Objects.requireNonNull(sticker).getView()) {
-                stickerBox.removeView(tv);
+    private fun add(schedules: ArrayList<Schedule>?, specIdx: Int) {
+        val count = if (specIdx < 0) ++stickerCount else specIdx
+        val sticker = Sticker()
+        if (schedules != null) {
+            for (schedule in schedules) {
+                val tv = TextView(context)
+                val param = createStickerParam(schedule)
+                tv.layoutParams = param
+                tv.setPadding(10, 0, 10, 0)
+                tv.text = """
+                    ${schedule.classTitle}
+                    ${schedule.classPlace}
+                    """.trimIndent()
+                tv.setTextColor(Color.parseColor("#FFFFFF"))
+                tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_STICKER_FONT_SIZE_DP.toFloat())
+                tv.setTypeface(null, Typeface.BOLD)
+                tv.setOnClickListener { v: View? ->
+                    if (stickerSelectedListener != null) stickerSelectedListener!!.OnStickerSelected(
+                        count,
+                        schedules
+                    )
+                }
+                sticker.addTextView(tv)
+                sticker.addSchedule(schedule)
+                stickers[count] = sticker
+                stickerBox!!.addView(tv)
             }
         }
-        stickers.clear();
+        setStickerColor()
     }
 
-    public void edit(int idx, ArrayList<Schedule> schedules) {
-        remove(idx);
-        add(schedules, idx);
+    fun createSaveData(): String {
+        return SaveManager.saveSticker(stickers)
     }
 
-    private void createTable() {
-        createTableHeader();
-        for (int i = 1; i < rowCount; i++) {
-            TableRow tableRow = new TableRow(context);
-            tableRow.setLayoutParams(createTableLayoutParam());
+    fun load(data: String?) {
+        removeAll()
+        stickers = SaveManager.loadSticker(data)
+        var maxKey = 0
+        for (key in stickers.keys) {
+            val schedules = stickers[key]?.schedules
+            add(schedules, key)
+            if (maxKey < key) maxKey = key
+        }
+        stickerCount = maxKey + 1
+        setStickerColor()
+    }
 
-            for (int k = 0; k < columnCount; k++) {
-                TextView tv = new TextView(context);
-                tv.setLayoutParams(createTableRowParam(cellHeight));
+    fun removeAll() {
+        for (key in stickers.keys) {
+            val sticker = stickers[key]
+            sticker?.view?.forEach { tv ->
+                stickerBox!!.removeView(tv)
+            }
+        }
+        stickers.clear()
+    }
+
+    fun edit(idx: Int, schedules: ArrayList<Schedule>) {
+        remove(idx)
+        add(schedules, idx)
+    }
+
+    private fun createTable() {
+        createTableHeader()
+        for (i in 1 until rowCount) {
+            val tableRow = TableRow(context)
+            tableRow.layoutParams = createTableLayoutParam()
+            for (k in 0 until columnCount) {
+                val tv = TextView(context)
+                tv.layoutParams = createTableRowParam(cellHeight)
                 if (k == 0) {
-                    tv.setText(headerTitle[i]);
+                    tv.text = headerTitle[i]
                     //tv.setText(getHeaderTime(i));
-                    tv.setTextColor(ContextCompat.getColor(context, R.color.colorHeaderText));
-                    tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_SIDE_HEADER_FONT_SIZE_DP);
-                    tv.setBackgroundColor(ContextCompat.getColor(context, R.color.colorHeader));
-                    tv.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
-                    tv.setLayoutParams(createTableRowParam(cellWidth, cellHeight));
+                    tv.setTextColor(ContextCompat.getColor(context, R.color.colorHeaderText))
+                    tv.setTextSize(
+                        TypedValue.COMPLEX_UNIT_DIP,
+                        DEFAULT_SIDE_HEADER_FONT_SIZE_DP.toFloat()
+                    )
+                    tv.setBackgroundColor(ContextCompat.getColor(context, R.color.colorHeader))
+                    tv.gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
+                    tv.layoutParams = createTableRowParam(cellWidth, cellHeight)
                 } else {
-                    tv.setText("");
-                    tv.setBackground(ContextCompat.getDrawable(context, R.drawable.item_border));
-                    tv.setGravity(Gravity.RIGHT);
+                    tv.text = ""
+                    tv.background = ContextCompat.getDrawable(context, R.drawable.item_border)
+                    tv.gravity = Gravity.RIGHT
                 }
-                tableRow.addView(tv);
+                tableRow.addView(tv)
             }
-            tableBox.addView(tableRow);
+            tableBox!!.addView(tableRow)
         }
     }
 
-    private void createTableHeader() {
-        TableRow tableRow = new TableRow(context);
-        tableRow.setLayoutParams(createTableLayoutParam());
-
-        for (int i = 0; i < columnCount; i++) {
-            TextView tv = new TextView(context);
+    private fun createTableHeader() {
+        val tableRow = TableRow(context)
+        tableRow.layoutParams = createTableLayoutParam()
+        for (i in 0 until columnCount) {
+            val tv = TextView(context)
             if (i == 0) {
-                tv.setLayoutParams(createTableRowParam(cellWidth, cellHeight));
+                tv.layoutParams = createTableRowParam(cellWidth, cellHeight)
             } else {
-                tv.setLayoutParams(createTableRowParam(cellHeight));
+                tv.layoutParams = createTableRowParam(cellHeight)
             }
-            tv.setTextColor(ContextCompat.getColor(context, R.color.colorHeaderText));
-            tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_HEADER_FONT_SIZE_DP);
-            tv.setText(getHeaderTime(i, startTime));
-            tv.setGravity(Gravity.RIGHT);
-
-            tableRow.addView(tv);
+            tv.setTextColor(ContextCompat.getColor(context, R.color.colorHeaderText))
+            tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_HEADER_FONT_SIZE_DP.toFloat())
+            tv.text = getHeaderTime(i, startTime)
+            tv.gravity = Gravity.RIGHT
+            tableRow.addView(tv)
         }
-        tableHeader.addView(tableRow);
+        tableHeader?.addView(tableRow)
     }
 
-    public void remove(int idx) {
-        Sticker sticker = stickers.get(idx);
-        for (TextView tv : Objects.requireNonNull(sticker).getView()) {
-            stickerBox.removeView(tv);
+    fun remove(idx: Int) {
+        val sticker = stickers[idx]
+        sticker?.view?.forEach { tv ->
+            stickerBox!!.removeView(tv)
         }
-        stickers.remove(idx);
-        setStickerColor();
+        stickers.remove(idx)
+        setStickerColor()
     }
 
-    private void setStickerColor() {
-        int size = stickers.size();
-        int[] orders = new int[size];
-        int i = 0;
-        for (int key : stickers.keySet()) {
-            orders[i++] = key;
+    private fun setStickerColor() {
+        val size = stickers.size
+        val orders = IntArray(size)
+        var i = 0
+        for (key in stickers.keys) {
+            orders[i++] = key
         }
-        Arrays.sort(orders);
-
-        int colorSize = stickerColors.length;
-
-        for (i = 0; i < size; i++) {
-            for (TextView v : Objects.requireNonNull(stickers.get(orders[i])).getView()) {
-                v.setBackgroundColor(Color.parseColor(stickerColors[i % (colorSize)]));
+        Arrays.sort(orders)
+        val colorSize = stickerColors.size
+        i = 0
+        while (i < size) {
+            stickers[orders[i]]?.view?.forEach { v ->
+                v.setBackgroundColor(Color.parseColor(stickerColors[i % colorSize]))
             }
+            i++
         }
     }
 
-    private RelativeLayout.LayoutParams createStickerParam(Schedule schedule) {
-        RelativeLayout.LayoutParams param = new RelativeLayout.LayoutParams(calStickerWidthPx(schedule), cellHeight);
-        param.addRule(RelativeLayout.ALIGN_PARENT_TOP);
-        param.addRule(RelativeLayout.ALIGN_PARENT_START);
-        param.setMargins(calStickerStartTime(schedule.getStartTime()), cellHeight * schedule.getDay(), 0, 0);
+    private fun createStickerParam(schedule: Schedule): RelativeLayout.LayoutParams {
+        val param = RelativeLayout.LayoutParams(calStickerWidthPx(schedule), cellHeight)
+        param.addRule(RelativeLayout.ALIGN_PARENT_TOP)
+        param.addRule(RelativeLayout.ALIGN_PARENT_START)
+        param.setMargins(calStickerStartTime(schedule.startTime), cellHeight * schedule.day, 0, 0)
         //param.setMargins(calStickerStartPxByTime(schedule.getStartTime())+calCellWidth()-cellWidth,cellHeight*schedule.getDay(),0,0);
-        return param;
+        return param
     }
 
-    private int calStickerWidthPx(Schedule schedule) {
-        Duration duration = Duration.between(schedule.getStartTime(), schedule.getEndTime());
-        int totalMinutes = Math.toIntExact(duration.toMinutes()) ;
-        return (int) (( totalMinutes / 60.0f) * calCellWidth() * DIVISION_SCALE);
+    private fun calStickerWidthPx(schedule: Schedule): Int {
+        val duration = Duration.between(schedule.startTime, schedule.endTime)
+        val totalMinutes = Math.toIntExact(duration.toMinutes())
+        return (totalMinutes / 60.0f * calCellWidth() * DIVISION_SCALE).toInt()
     }
 
-    private int calStickerStartPxByTime(LocalDateTime time) {
-        return ((time.getHour() - startTime.getHour()) * calCellWidth()) + (int) ((time.getMinute() / 60.0f) * calCellWidth());
+    private fun calStickerStartPxByTime(time: LocalDateTime): Int {
+        return (time.hour - startTime!!.hour) * calCellWidth() + (time.minute / 60.0f * calCellWidth()).toInt()
     }
 
-    private int calStickerStartTime(LocalDateTime time) {
-        Duration duration = Duration.between(startTime, time);
-        int totalMinutes = Math.toIntExact(duration.toMinutes());
-
-        if (startTime.getHour() == time.getHour()) {
-            if(totalMinutes == 0){
-                totalMinutes += TIME_SCALE - 1;
+    private fun calStickerStartTime(time: LocalDateTime): Int {
+        val duration = Duration.between(startTime, time)
+        var totalMinutes = Math.toIntExact(duration.toMinutes())
+        return if (startTime!!.hour == time.hour) {
+            totalMinutes += if (totalMinutes == 0) {
+                TIME_SCALE - 1
+            } else {
+                TIME_SCALE
             }
-            else{
-                totalMinutes += TIME_SCALE;
-            }
-            return(int) ((totalMinutes   / 60.0f) * calCellWidth() * DIVISION_SCALE) ;
+            (totalMinutes / 60.0f * calCellWidth() * DIVISION_SCALE).toInt()
         } else {
-            int totalHours = (int) duration.toHours();
-            int calculatedTime = totalMinutes;
+            val totalHours = duration.toHours().toInt()
+            var calculatedTime = totalMinutes
             if (totalHours == 0) {
-                calculatedTime += TIME_SCALE;
+                calculatedTime += TIME_SCALE
             } else if (totalHours >= 2) {
-                if (totalHours % 2 == 0) {
-                    calculatedTime -= (totalHours / 2) *TIME_SCALE;
+                calculatedTime -= if (totalHours % 2 == 0) {
+                    totalHours / 2 * TIME_SCALE
                 } else {
-                    calculatedTime -= (totalHours - 1) * TIME_SCALE;
+                    (totalHours - 1) * TIME_SCALE
                 }
             }
-            return (totalHours * calCellWidth()) + (int) ((calculatedTime / 60.0f) * calCellWidth() * DIVISION_SCALE);
+            totalHours * calCellWidth() + (calculatedTime / 60.0f * calCellWidth() * DIVISION_SCALE).toInt()
         }
     }
 
-    private int calCellWidth() {
-        Display display = ((Activity) context).getWindowManager().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
-        return (size.x - getPaddingStart() - getPaddingEnd() - cellWidth) / (rowCount - 1);
+    private fun calCellWidth(): Int {
+        val display = (context as Activity).windowManager.defaultDisplay
+        val size = Point()
+        display.getSize(size)
+        return (size.x - paddingStart - paddingEnd - cellWidth) / (rowCount - 1)
     }
 
-    private TableLayout.LayoutParams createTableLayoutParam() {
-        return new TableLayout.LayoutParams(TableLayout.LayoutParams.MATCH_PARENT, TableLayout.LayoutParams.MATCH_PARENT);
+    private fun createTableLayoutParam(): TableLayout.LayoutParams {
+        return TableLayout.LayoutParams(
+            TableLayout.LayoutParams.MATCH_PARENT,
+            TableLayout.LayoutParams.MATCH_PARENT
+        )
     }
 
-    private TableRow.LayoutParams createTableRowParam(int h_px) {
-        return new TableRow.LayoutParams(calCellWidth(), h_px);
+    private fun createTableRowParam(h_px: Int): TableRow.LayoutParams {
+        return TableRow.LayoutParams(calCellWidth(), h_px)
     }
 
-    private TableRow.LayoutParams createTableRowParam(int w_px, int h_px) {
-        return new TableRow.LayoutParams(w_px, h_px);
+    private fun createTableRowParam(w_px: Int, h_px: Int): TableRow.LayoutParams {
+        return TableRow.LayoutParams(w_px, h_px)
     }
 
-    public interface OnStickerSelectedListener {
-        void OnStickerSelected(int idx, ArrayList<Schedule> schedules);
+    interface OnStickerSelectedListener {
+        fun OnStickerSelected(idx: Int, schedules: ArrayList<Schedule>?)
     }
 
+    companion object {
+        private const val DEFAULT_ROW_COUNT = 13
+
+        //private static final int DEFAULT_COLUMN_COUNT = 25;
+        private const val DEFAULT_CELL_HEIGHT_DP = 50
+        private const val DEFAULT_SIDE_CELL_WIDTH_DP = 80
+
+        //private static final int DEFAULT_START_TIME = LocalDateTime.now();
+        private const val DEFAULT_SIDE_HEADER_FONT_SIZE_DP = 13
+        private const val DEFAULT_HEADER_FONT_SIZE_DP = 15
+        private const val DEFAULT_STICKER_FONT_SIZE_DP = 13
+        private const val TIME_SCALE = 5
+        private const val ONE_HOUR = 60
+        private const val DIVISION_SCALE = ONE_HOUR / TIME_SCALE
+        private fun dp2Px(dp: Int): Int {
+            return (dp * Resources.getSystem().displayMetrics.density).toInt()
+        }
+    }
 }

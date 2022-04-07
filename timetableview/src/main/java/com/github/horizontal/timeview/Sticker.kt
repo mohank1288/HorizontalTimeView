@@ -1,32 +1,23 @@
-package com.github.horizontal.timeview;
+package com.github.horizontal.timeview
 
-import android.widget.TextView;
+import android.widget.TextView
+import com.github.horizontal.timeview.Schedule
+import java.io.Serializable
+import java.util.ArrayList
 
-import java.io.Serializable;
-import java.util.ArrayList;
-
-public class Sticker implements Serializable {
-    private ArrayList<TextView> view;
-    private ArrayList<Schedule> schedules;
-
-    public Sticker() {
-        this.view = new ArrayList<TextView>();
-        this.schedules = new ArrayList<Schedule>();
+class Sticker : Serializable {
+    val view: ArrayList<TextView>
+    val schedules: ArrayList<Schedule>
+    fun addTextView(v: TextView) {
+        view.add(v)
     }
 
-    public void addTextView(TextView v){
-        view.add(v);
+    fun addSchedule(schedule: Schedule) {
+        schedules.add(schedule)
     }
 
-    public void addSchedule(Schedule schedule){
-        schedules.add(schedule);
-    }
-
-    public ArrayList<TextView> getView() {
-        return view;
-    }
-
-    public ArrayList<Schedule> getSchedules() {
-        return schedules;
+    init {
+        view = ArrayList()
+        schedules = ArrayList()
     }
 }

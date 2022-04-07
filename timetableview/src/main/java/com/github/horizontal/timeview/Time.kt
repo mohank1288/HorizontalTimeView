@@ -1,31 +1,15 @@
-package com.github.horizontal.timeview;
+package com.github.horizontal.timeview
 
-import java.io.Serializable;
+import java.io.Serializable
 
-public class Time implements Serializable {
-    private int hour = 0;
-    private int minute = 0;
+class Time : Serializable {
+    var hour = 0
+    var minute = 0
 
-    public Time(int hour, int minute) {
-        this.hour = hour;
-        this.minute = minute;
+    constructor(hour: Int, minute: Int) {
+        this.hour = hour
+        this.minute = minute
     }
 
-    public Time() { }
-
-    public int getHour() {
-        return hour;
-    }
-
-    public void setHour(int hour) {
-        this.hour = hour;
-    }
-
-    public int getMinute() {
-        return minute;
-    }
-
-    public void setMinute(int minute) {
-        this.minute = minute;
-    }
+    constructor() {}
 }
