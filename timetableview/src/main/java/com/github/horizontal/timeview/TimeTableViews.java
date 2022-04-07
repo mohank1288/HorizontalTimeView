@@ -19,6 +19,8 @@ import android.widget.TableLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 
+import androidx.core.content.ContextCompat;
+
 import com.github.tlaabs.timetableview.R;
 
 import java.time.Duration;
@@ -26,6 +28,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Objects;
 
 public class TimeTableViews extends LinearLayout {
@@ -38,7 +41,9 @@ public class TimeTableViews extends LinearLayout {
     private static final int DEFAULT_SIDE_HEADER_FONT_SIZE_DP = 13;
     private static final int DEFAULT_HEADER_FONT_SIZE_DP = 15;
     private static final int DEFAULT_STICKER_FONT_SIZE_DP = 13;
-
+    private static final int TIME_SCALE = 5;
+    private static final int ONE_HOUR = 60;
+    private static final int DIVISION_SCALE = ONE_HOUR / TIME_SCALE;
     private int rowCount;
     private int columnCount;
     private int cellHeight;
@@ -46,8 +51,6 @@ public class TimeTableViews extends LinearLayout {
     private String[] headerTitle;
     private String[] stickerColors;
     private LocalDateTime startTime;
-    private LocalDateTime endTime;
-    private int totalMinutes;
     private RelativeLayout stickerBox;
     TableLayout tableHeader;
     TableLayout tableBox;
@@ -86,10 +89,10 @@ public class TimeTableViews extends LinearLayout {
         int colorsId = a.getResourceId(R.styleable.TimetableView_sticker_colors, R.array.default_sticker_color);
         stickerColors = a.getResources().getStringArray(colorsId);
         startTime = LocalDateTime.now();
-        endTime = LocalDateTime.now().plusHours(2);
+        LocalDateTime endTime = startTime.plusHours(6);
         Duration d = Duration.between(startTime, endTime);
-        totalMinutes = Math.toIntExact(d.toMinutes());
-        columnCount = (totalMinutes / 5) + 1;
+        int totalMinutes = Math.toIntExact(d.toMinutes());
+        columnCount = (totalMinutes / TIME_SCALE) + 1;
         //int min =  (totalMins/5);
         //startTime = a.getInt(R.styleable.TimetableView_start_time, DEFAULT_START_TIME);
 
@@ -113,10 +116,11 @@ public class TimeTableViews extends LinearLayout {
     }
 
     private String getHeaderTime(int i, LocalDateTime localDateTime) {
-        if(i!=0){
-           localDateTime = localDateTime.plusMinutes(i* 5L);
+        if (i != 0) {
+            localDateTime = localDateTime.plusMinutes((long) i * TIME_SCALE);
         }
-        return localDateTime.getHour() + ":" + localDateTime.getMinute();
+        return String.format(Locale.ENGLISH, "%02d:%02d", localDateTime.getHour(), localDateTime.getMinute());
+        //return localDateTime.getHour() + ":" + localDateTime.getMinute();
 
         /*this.startTime.getHour() +":" + this.startTime.getMinute()
         int p = (this.startTime.getHour() + i) % 24;
@@ -127,6 +131,7 @@ public class TimeTableViews extends LinearLayout {
     static private int dp2Px(int dp) {
         return (int) (dp * Resources.getSystem().getDisplayMetrics().density);
     }
+
 
     public void add(ArrayList<Schedule> schedules) {
         add(schedules, -1);
@@ -202,14 +207,14 @@ public class TimeTableViews extends LinearLayout {
                 if (k == 0) {
                     tv.setText(headerTitle[i]);
                     //tv.setText(getHeaderTime(i));
-                    tv.setTextColor(getResources().getColor(R.color.colorHeaderText));
+                    tv.setTextColor(ContextCompat.getColor(context, R.color.colorHeaderText));
                     tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_SIDE_HEADER_FONT_SIZE_DP);
-                    tv.setBackgroundColor(getResources().getColor(R.color.colorHeader));
+                    tv.setBackgroundColor(ContextCompat.getColor(context, R.color.colorHeader));
                     tv.setGravity(Gravity.TOP | Gravity.CENTER_HORIZONTAL);
                     tv.setLayoutParams(createTableRowParam(cellWidth, cellHeight));
                 } else {
                     tv.setText("");
-                    tv.setBackground(getResources().getDrawable(R.drawable.item_border));
+                    tv.setBackground(ContextCompat.getDrawable(context, R.drawable.item_border));
                     tv.setGravity(Gravity.RIGHT);
                 }
                 tableRow.addView(tv);
@@ -229,9 +234,9 @@ public class TimeTableViews extends LinearLayout {
             } else {
                 tv.setLayoutParams(createTableRowParam(cellHeight));
             }
-            tv.setTextColor(getResources().getColor(R.color.colorHeaderText));
+            tv.setTextColor(ContextCompat.getColor(context, R.color.colorHeaderText));
             tv.setTextSize(TypedValue.COMPLEX_UNIT_DIP, DEFAULT_HEADER_FONT_SIZE_DP);
-            tv.setText(getHeaderTime(i,startTime));
+            tv.setText(getHeaderTime(i, startTime));
             tv.setGravity(Gravity.RIGHT);
 
             tableRow.addView(tv);
@@ -270,12 +275,47 @@ public class TimeTableViews extends LinearLayout {
         RelativeLayout.LayoutParams param = new RelativeLayout.LayoutParams(calStickerWidthPx(schedule), cellHeight);
         param.addRule(RelativeLayout.ALIGN_PARENT_TOP);
         param.addRule(RelativeLayout.ALIGN_PARENT_START);
-        param.setMargins( calStickerStartPxByTime(schedule.getStartTime()) - cellWidth + (calCellWidth()), cellHeight * schedule.getDay(), 0, 0);
+        param.setMargins(calStickerStartTime(schedule.getStartTime()), cellHeight * schedule.getDay(), 0, 0);
+        //param.setMargins(calStickerStartPxByTime(schedule.getStartTime())+calCellWidth()-cellWidth,cellHeight*schedule.getDay(),0,0);
         return param;
     }
 
-    private int calStickerStartPxByTimes(LocalDateTime time) {
-        return ((time.getHour() - startTime.getHour()) * calCellWidth()) +(int) ((time.getMinute() / 60.0f) * calCellWidth());
+    private int calStickerWidthPx(Schedule schedule) {
+        Duration duration = Duration.between(schedule.getStartTime(), schedule.getEndTime());
+        int totalMinutes = Math.toIntExact(duration.toMinutes()) ;
+        return (int) (( totalMinutes / 60.0f) * calCellWidth() * DIVISION_SCALE);
+    }
+
+    private int calStickerStartPxByTime(LocalDateTime time) {
+        return ((time.getHour() - startTime.getHour()) * calCellWidth()) + (int) ((time.getMinute() / 60.0f) * calCellWidth());
+    }
+
+    private int calStickerStartTime(LocalDateTime time) {
+        Duration duration = Duration.between(startTime, time);
+        int totalMinutes = Math.toIntExact(duration.toMinutes());
+
+        if (startTime.getHour() == time.getHour()) {
+            if(totalMinutes == 0){
+                totalMinutes += TIME_SCALE - 1;
+            }
+            else{
+                totalMinutes += TIME_SCALE;
+            }
+            return(int) ((totalMinutes   / 60.0f) * calCellWidth() * DIVISION_SCALE) ;
+        } else {
+            int totalHours = (int) duration.toHours();
+            int calculatedTime = totalMinutes;
+            if (totalHours == 0) {
+                calculatedTime += TIME_SCALE;
+            } else if (totalHours >= 2) {
+                if (totalHours % 2 == 0) {
+                    calculatedTime -= (totalHours / 2) *TIME_SCALE;
+                } else {
+                    calculatedTime -= (totalHours - 1) * TIME_SCALE;
+                }
+            }
+            return (totalHours * calCellWidth()) + (int) ((calculatedTime / 60.0f) * calCellWidth() * DIVISION_SCALE);
+        }
     }
 
     private int calCellWidth() {
@@ -283,16 +323,6 @@ public class TimeTableViews extends LinearLayout {
         Point size = new Point();
         display.getSize(size);
         return (size.x - getPaddingStart() - getPaddingEnd() - cellWidth) / (rowCount - 1);
-    }
-
-    private int calStickerWidthPx(Schedule schedule) {
-        int startTopPx = calStickerStartPxByTime(schedule.getStartTime());
-        int endTopPx = calStickerStartPxByTime(schedule.getEndTime())  ;
-        return (endTopPx - startTopPx)*12;
-    }
-
-    private int calStickerStartPxByTime(LocalDateTime time) {
-        return ((time.getHour() - startTime.getHour()) * calCellWidth()) +(int) ((time.getMinute() / 60.0f) * calCellWidth());
     }
 
     private TableLayout.LayoutParams createTableLayoutParam() {
